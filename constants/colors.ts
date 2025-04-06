@@ -1,0 +1,21 @@
+export default {
+  primary: "#4A90E2",
+  primaryLight: "#7EB6FF",
+  secondary: "#50C878",
+  secondaryLight: "#8EEDB2",
+  background: "#FFFFFF",
+  card: "#F8F9FA",
+  text: "#333333",
+  textSecondary: "#666666",
+  textLight: "#999999",
+  border: "#E1E4E8",
+  error: "#E53935",
+  warning: "#FFB74D",
+  success: "#66BB6A",
+  chart: {
+    bioAge: "#4A90E2",
+    chronoAge: "#50C878",
+    grid: "#E1E4E8",
+    axis: "#999999",
+  },
+};

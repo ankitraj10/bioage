@@ -1,0 +1,135 @@
+export const bloodWorkMetrics = [
+  {
+    id: "glucose",
+    name: "Glucose",
+    unit: "mg/dL",
+    normalRange: "70-99",
+    weight: 0.15,
+  },
+  {
+    id: "totalCholesterol",
+    name: "Total Cholesterol",
+    unit: "mg/dL",
+    normalRange: "125-200",
+    weight: 0.12,
+  },
+  {
+    id: "hdl",
+    name: "HDL Cholesterol",
+    unit: "mg/dL",
+    normalRange: "40-60",
+    weight: 0.1,
+  },
+  {
+    id: "ldl",
+    name: "LDL Cholesterol",
+    unit: "mg/dL",
+    normalRange: "< 100",
+    weight: 0.1,
+  },
+  {
+    id: "triglycerides",
+    name: "Triglycerides",
+    unit: "mg/dL",
+    normalRange: "< 150",
+    weight: 0.08,
+  },
+  {
+    id: "creatinine",
+    name: "Creatinine",
+    unit: "mg/dL",
+    normalRange: "0.6-1.2",
+    weight: 0.07,
+  },
+  { id: "bun", name: "BUN", unit: "mg/dL", normalRange: "7-20", weight: 0.05 },
+  { id: "alt", name: "ALT", unit: "U/L", normalRange: "7-56", weight: 0.06 },
+  { id: "ast", name: "AST", unit: "U/L", normalRange: "10-40", weight: 0.06 },
+  { id: "hba1c", name: "HbA1c", unit: "%", normalRange: "< 5.7", weight: 0.12 },
+  {
+    id: "vitaminD",
+    name: "Vitamin D",
+    unit: "ng/mL",
+    normalRange: "20-50",
+    weight: 0.05,
+  },
+  {
+    id: "tsh",
+    name: "TSH",
+    unit: "mIU/L",
+    normalRange: "0.4-4.0",
+    weight: 0.04,
+  },
+];
+
+export const lifestyleMetrics = [
+  {
+    id: "sleepHours",
+    name: "Sleep Duration",
+    unit: "hours",
+    normalRange: "7-9",
+    weight: 0.1,
+  },
+  {
+    id: "exerciseMinutes",
+    name: "Exercise",
+    unit: "min/week",
+    normalRange: "150+",
+    weight: 0.15,
+  },
+  {
+    id: "alcoholDrinks",
+    name: "Alcohol Consumption",
+    unit: "drinks/week",
+    normalRange: "< 7",
+    weight: 0.08,
+  },
+  {
+    id: "smokingStatus",
+    name: "Smoking Status",
+    options: ["Never", "Former", "Current"],
+    weight: 0.12,
+  },
+  {
+    id: "stressLevel",
+    name: "Stress Level",
+    options: ["Low", "Moderate", "High"],
+    weight: 0.1,
+  },
+  {
+    id: "dietQuality",
+    name: "Diet Quality",
+    options: ["Poor", "Average", "Good", "Excellent"],
+    weight: 0.12,
+  },
+];
+
+export const vitalMetrics = [
+  {
+    id: "systolicBP",
+    name: "Systolic BP",
+    unit: "mmHg",
+    normalRange: "90-120",
+    weight: 0.08,
+  },
+  {
+    id: "diastolicBP",
+    name: "Diastolic BP",
+    unit: "mmHg",
+    normalRange: "60-80",
+    weight: 0.07,
+  },
+  {
+    id: "restingHR",
+    name: "Resting Heart Rate",
+    unit: "bpm",
+    normalRange: "60-100",
+    weight: 0.06,
+  },
+  {
+    id: "bmi",
+    name: "BMI",
+    unit: "kg/m²",
+    normalRange: "18.5-24.9",
+    weight: 0.09,
+  },
+];
