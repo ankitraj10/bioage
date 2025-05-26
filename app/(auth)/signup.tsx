@@ -20,11 +20,11 @@ export default function SignupScreen() {
 
     const { signup, isLoading, error, isAuthenticated } = useAuthStore();
 
-    // useEffect(() => {
-    //     if (isAuthenticated) {
-    //         router.replace('/(tabs)');
-    //     }
-    // }, [isAuthenticated]);
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.replace('/(tabs)');
+        }
+    }, [isAuthenticated]);
 
     const validateForm = () => {
         let isValid = true;

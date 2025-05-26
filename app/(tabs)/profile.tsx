@@ -23,10 +23,13 @@ import Button from '@/components/Button';
 import Colors from '@/constants/colors';
 import useAuthStore from '@/store/auth-store';
 import useHealthStore from '@/store/health-store';
+import useCalculateHealthStore from '@/store/calculate-health';
 
 export default function ProfileScreen() {
     const { user, updateProfile, logout, isLoading } = useAuthStore();
-    const { clearHealthData, bioAgeResults } = useHealthStore();
+    const { results, clearHealthData } = useCalculateHealthStore();
+    const bioAgeResults = results;
+
 
     const [name, setName] = useState(user?.name || '');
     const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || '');
@@ -330,7 +333,7 @@ export default function ProfileScreen() {
 
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push('/history')}
+                        onPress={() => router.push('/(tabs)')}
                     >
                         <View style={styles.menuItemLeft}>
                             <View style={[styles.menuItemIcon, { backgroundColor: Colors.primaryLight }]}>
@@ -353,7 +356,7 @@ export default function ProfileScreen() {
                         </View>
                         <ChevronRight size={20} color={Colors.textLight} />
                     </TouchableOpacity>
-
+                    {/* 
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => router.push('/export-data')}
@@ -365,7 +368,7 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemText}>Export Data</Text>
                         </View>
                         <ChevronRight size={20} color={Colors.textLight} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 <View style={styles.menuSection}>
@@ -397,7 +400,7 @@ export default function ProfileScreen() {
                         <ChevronRight size={20} color={Colors.textLight} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => router.push('/privacy')}
                     >
@@ -408,7 +411,7 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemText}>Privacy & Data</Text>
                         </View>
                         <ChevronRight size={20} color={Colors.textLight} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     <TouchableOpacity
                         style={styles.menuItem}
@@ -435,13 +438,13 @@ export default function ProfileScreen() {
                             }
                         }}
                     >
-                        <View style={styles.menuItemLeft}>
+                        {/* <View style={styles.menuItemLeft}>
                             <View style={[styles.menuItemIcon, { backgroundColor: Colors.primary }]}>
                                 <Share2 size={20} color="#fff" />
                             </View>
                             <Text style={styles.menuItemText}>Share Results</Text>
-                        </View>
-                        <ChevronRight size={20} color={Colors.textLight} />
+                        </View> */}
+                        {/* <ChevronRight size={20} color={Colors.textLight} /> */}
                     </TouchableOpacity>
                 </View>
 

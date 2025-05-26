@@ -7,10 +7,27 @@ import Card from '@/components/Card';
 import Colors from '@/constants/colors';
 import useAuthStore from '@/store/auth-store';
 import useHealthStore from '@/store/health-store';
+import useCalculateHealthStore from '@/store/calculate-health';
+import { useNavigation } from 'expo-router';
+
+
+
 
 export default function HistoryScreen() {
     const { isAuthenticated } = useAuthStore();
-    const { bioAgeResults } = useHealthStore();
+    const { results } = useCalculateHealthStore();
+    const navigation = useNavigation();
+    // const { bioAgeResults } = useHealthStore();
+    const bioAgeResults = results;
+
+    useEffect(() => {
+
+        navigation.setOptions({
+            tabBarStyle: { display: 'none' },
+            headerShown: true,
+            title: 'Bio Age History',
+        });
+    }, []);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -148,9 +165,9 @@ export default function HistoryScreen() {
                                         </View>
 
                                         <View style={styles.changeContainer}>
-                                            {getChangeIcon(result.biologicalAge, previousResult?.biologicalAge)}
+                                            {getChangeIcon(result.biologicalAge, previousResult?.biologicalAge ?? null)}
                                             <Text style={styles.changeText}>
-                                                {getChangeText(result.biologicalAge, previousResult?.biologicalAge)}
+                                                {getChangeText(result.biologicalAge, previousResult?.biologicalAge ?? null)}
                                             </Text>
                                         </View>
 
@@ -404,3 +421,9 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
 });
+
+export const options = {
+    tabBarStyle: { display: 'none' },
+    headerShown: true,
+    title: 'Bio Age History',
+};

@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    Alert,
+} from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/store/firebaseConfig';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import Colors from '@/constants/colors';
@@ -12,6 +23,9 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [loadin, setLoading] = useState(false);
+    const [errorr, setError] = useState("");
+    const [userrr, setUser] = useState("");
 
     const { login, isLoading, error, isAuthenticated } = useAuthStore();
 
@@ -24,7 +38,6 @@ export default function LoginScreen() {
     const validateForm = () => {
         let isValid = true;
 
-        // Validate email
         if (!email) {
             setEmailError('Email is required');
             isValid = false;
@@ -35,7 +48,6 @@ export default function LoginScreen() {
             setEmailError('');
         }
 
-        // Validate password
         if (!password) {
             setPasswordError('Password is required');
             isValid = false;
@@ -49,13 +61,37 @@ export default function LoginScreen() {
         return isValid;
     };
 
+    // const handleLogin = async () => {
+    //     if (!validateForm()) return;
+
+    //     setLoading(true);
+    //     setError(null);
+
+    //     try {
+    //         console.log("test test", email, password)
+    //         const result = await signInWithEmailAndPassword(auth, email, password);
+    //         console.log("test test 22", email, password, result)
+    //         setUser(result?.result);
+    //         router.replace('/(tabs)');
+    //     } catch (err: any) {
+    //         let message = 'Login failed. Please try again.';
+    //         if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+    //             message = 'Invalid email or password';
+    //         } else if (err.code === 'auth/too-many-requests') {
+    //             message = 'Too many failed login attempts. Try again later.';
+    //         }
+    //         setError(message);
+    //         Alert.alert('Login Error', message);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
     const handleLogin = async () => {
         if (validateForm()) {
             await login(email, password);
         }
     };
-
-    // For demo purposes, pre-fill with demo account
     const fillDemoAccount = () => {
         setEmail('demo@example.com');
         setPassword('password');
@@ -119,10 +155,7 @@ export default function LoginScreen() {
                             style={styles.loginButton}
                         />
 
-                        <TouchableOpacity
-                            onPress={fillDemoAccount}
-                            style={styles.demoAccountLink}
-                        >
+                        <TouchableOpacity onPress={fillDemoAccount} style={styles.demoAccountLink}>
                             <Text style={styles.demoAccountText}>Use demo account</Text>
                         </TouchableOpacity>
                     </View>
@@ -140,23 +173,15 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.background,
-    },
-    keyboardAvoidingView: {
-        flex: 1,
-    },
+    container: { flex: 1, backgroundColor: Colors.background },
+    keyboardAvoidingView: { flex: 1 },
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 24,
         paddingTop: 24,
         paddingBottom: 24,
     },
-    formContainer: {
-        flex: 1,
-        justifyContent: 'center',
-    },
+    formContainer: { flex: 1, justifyContent: 'center' },
     title: {
         fontSize: 28,
         fontWeight: '700',
@@ -174,10 +199,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 16,
     },
-    errorText: {
-        color: Colors.error,
-        fontSize: 14,
-    },
+    errorText: { color: Colors.error, fontSize: 14 },
     forgotPasswordLink: {
         alignSelf: 'flex-end',
         marginBottom: 24,
@@ -186,9 +208,7 @@ const styles = StyleSheet.create({
         color: Colors.primary,
         fontSize: 14,
     },
-    loginButton: {
-        marginBottom: 16,
-    },
+    loginButton: { marginBottom: 16 },
     demoAccountLink: {
         alignSelf: 'center',
         marginTop: 8,

@@ -9,10 +9,13 @@ import Button from '@/components/Button';
 import Colors from '@/constants/colors';
 import useAuthStore from '@/store/auth-store';
 import useHealthStore from '@/store/health-store';
+import useCalculateHealthStore from '@/store/calculate-health';
+
 
 export default function RecommendationsScreen() {
     const { isAuthenticated } = useAuthStore();
     const { bioAgeResults } = useHealthStore();
+    const { results } = useCalculateHealthStore();
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -20,9 +23,11 @@ export default function RecommendationsScreen() {
         }
     }, [isAuthenticated]);
 
-    const latestResult = bioAgeResults.length > 0 ? bioAgeResults[0] : null;
+    // const latestResult = bioAgeResults.length > 0 ? bioAgeResults[0] : null;
+    const latestResult = results;
+    console.log("test result recomendation", results)
 
-    if (!latestResult) {
+    if (results?.length === 0) {
         return (
             <SafeAreaView style={styles.container} edges={['bottom']}>
                 <View style={styles.emptyContainer}>
@@ -46,7 +51,7 @@ export default function RecommendationsScreen() {
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <BioAgeCard result={latestResult} />
+                <BioAgeCard result={latestResult[0]} />
 
                 <View style={styles.recommendationsHeader}>
                     <Text style={styles.recommendationsTitle}>Personalized Recommendations</Text>
@@ -55,11 +60,8 @@ export default function RecommendationsScreen() {
                     </Text>
                 </View>
 
-                {latestResult.recommendations.map(recommendation => (
-                    <RecommendationCard
-                        key={recommendation.id}
-                        recommendation={recommendation}
-                    />
+                {results[0]?.recommendations.map((rec) => (
+                    <RecommendationCard key={rec.id} recommendation={rec} />
                 ))}
 
                 <View style={styles.actionContainer}>

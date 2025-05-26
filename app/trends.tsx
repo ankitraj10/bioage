@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, Calendar, TrendingDown, TrendingUp } from 'lucide-react-native';
 import Card from '@/components/Card';
 import Colors from '@/constants/colors';
 import useHealthStore from '@/store/health-store';
+import useCalculateHealthStore from '@/store/calculate-health';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 48;
 const CHART_HEIGHT = 200;
 
 export default function TrendsScreen() {
-    const { bioAgeResults } = useHealthStore();
+    const { results } = useCalculateHealthStore();
+    // const { bioAgeResults } = useHealthStore();
+    const bioAgeResults = results;
     const [timeRange, setTimeRange] = useState<'3m' | '6m' | '1y' | 'all'>('all');
     const [chartData, setChartData] = useState<any[]>([]);
 

@@ -10,10 +10,25 @@ import HealthMetricPicker from '@/components/HealthMetricPicker';
 import Colors from '@/constants/colors';
 import useAuthStore from '@/store/auth-store';
 import useHealthStore from '@/store/health-store';
+import useCalculateHealthStore from "@/store/calculate-health"
 import { bloodWorkMetrics, lifestyleMetrics, vitalMetrics } from '@/constants/metrics';
-
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import { OpenAI } from "openai"
 export default function CalculatorScreen() {
     const { user, isAuthenticated } = useAuthStore();
+
+    // const {
+    //     bloodwork,
+    //     lifestyle,
+    //     vitals,
+    //     setBloodwork,
+    //     setLifestyle,
+    //     setVitals,
+    //     calculateBioAge,
+    //     isLoading,
+    // } = useHealthStore();
+
     const {
         bloodwork,
         lifestyle,
@@ -21,27 +36,22 @@ export default function CalculatorScreen() {
         setBloodwork,
         setLifestyle,
         setVitals,
-        calculateBioAge,
-        isLoading
-    } = useHealthStore();
+        calculateWithAI,
+        isLoading,
+    } = useCalculateHealthStore();
 
     const [activeSection, setActiveSection] = useState<'vitals' | 'lifestyle' | 'bloodwork'>('vitals');
     const [formData, setFormData] = useState({
-        // Vitals
         systolicBP: '',
         diastolicBP: '',
         restingHR: '',
         bmi: '',
-
-        // Lifestyle
         sleepHours: '',
         exerciseMinutes: '',
         alcoholDrinks: '',
         smokingStatus: 'Never',
         stressLevel: 'Low',
         dietQuality: 'Good',
-
-        // Bloodwork
         glucose: '',
         totalCholesterol: '',
         hdl: '',
@@ -55,6 +65,8 @@ export default function CalculatorScreen() {
         vitaminD: '',
         tsh: '',
     });
+    const [uploadMode, setUploadMode] = useState<'manual' | 'pdf'>('manual');
+
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -62,7 +74,6 @@ export default function CalculatorScreen() {
         }
     }, [isAuthenticated]);
 
-    // Initialize form with existing data
     useEffect(() => {
         if (bloodwork) {
             setFormData(prev => ({
@@ -174,7 +185,6 @@ export default function CalculatorScreen() {
     };
 
     const handleCalculate = async () => {
-        // Save current section data
         if (activeSection === 'vitals') {
             saveVitals();
         } else if (activeSection === 'lifestyle') {
@@ -183,8 +193,21 @@ export default function CalculatorScreen() {
             saveBloodwork();
         }
 
-        // Calculate bio age
-        const result = await calculateBioAge();
+        // Calculate age from DOB
+        let chronologicalAge = 30;
+        if (user?.dateOfBirth) {
+            const birthDate = new Date(user.dateOfBirth);
+            const today = new Date();
+            chronologicalAge = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                chronologicalAge--;
+            }
+        }
+
+        console.log("Calling OpenAI with age", chronologicalAge);
+
+        const result = await calculateWithAI(chronologicalAge, user?.id || '');
 
         if (result) {
             router.push('/recommendations');
@@ -192,6 +215,7 @@ export default function CalculatorScreen() {
             Alert.alert('Error', 'Failed to calculate biological age. Please try again.');
         }
     };
+
 
     const renderVitalsSection = () => (
         <View>
@@ -273,25 +297,75 @@ export default function CalculatorScreen() {
 
     const renderBloodworkSection = () => (
         <View>
-            <Text style={styles.sectionTitle}>Blood Work Results</Text>
+            <Text style={styles.sectionTitle}>Blood Work Input</Text>
             <Text style={styles.sectionDescription}>
-                Enter your most recent blood test results for a more accurate biological age calculation.
+                Choose how you want to enter your blood work data.
             </Text>
 
-            <Text style={styles.optionalText}>
-                This section is optional but provides more accurate results.
-            </Text>
-
-            {bloodWorkMetrics.map(metric => (
-                <HealthMetricInput
-                    key={metric.id}
-                    label={metric.name}
-                    value={formData[metric.id as keyof typeof formData]}
-                    onChangeText={(value) => handleInputChange(metric.id, value)}
-                    unit={metric.unit}
-                    normalRange={metric.normalRange}
+            {/* <View style={{ marginBottom: 16 }}>
+                <Button
+                    title="Upload PDF Report"
+                    variant={uploadMode === 'pdf' ? 'primary' : 'outline'}
+                    onPress={() => setUploadMode('pdf')}
+                    style={{ marginBottom: 8 }}
                 />
-            ))}
+                <Button
+                    title="Add Manually"
+                    variant={uploadMode === 'manual' ? 'primary' : 'outline'}
+                    onPress={() => setUploadMode('manual')}
+                />
+            </View> */}
+            {/* 
+            {uploadMode === 'pdf' && (
+                <View>
+                    <Button
+                        title="Select PDF File"
+                        onPress={pickAndParsePdf}
+                        variant="primary"
+                    />
+                  
+                </View>
+            )} */}
+
+            {/* {uploadMode === 'manual' && ( */}
+            <View>
+                <Text style={styles.sectionTitle}>Blood Work Results</Text>
+                <Text style={styles.sectionDescription}>
+                    Enter your most recent blood test results for a more accurate biological age calculation.
+                </Text>
+
+                <Text style={styles.optionalText}>
+                    This section is optional but provides more accurate results.
+                </Text>
+
+                {bloodWorkMetrics.map(metric => (
+                    <HealthMetricInput
+                        key={metric.id}
+                        label={metric.name}
+                        value={formData[metric.id as keyof typeof formData]}
+                        onChangeText={(value) => handleInputChange(metric.id, value)}
+                        unit={metric.unit}
+                        normalRange={metric.normalRange}
+                    />
+                ))}
+
+                {/* <View style={styles.buttonContainer}>
+                        <Button
+                            title="Back to Lifestyle"
+                            onPress={() => setActiveSection('lifestyle')}
+                            variant="outline"
+                            style={styles.backButton}
+                        />
+                        <Button
+                            title="Calculate"
+                            onPress={handleCalculate}
+                            variant="primary"
+                            loading={isLoading}
+                            disabled={isLoading}
+                            style={styles.nextButton}
+                        />
+                    </View> */}
+            </View>
 
             <View style={styles.buttonContainer}>
                 <Button
@@ -311,6 +385,95 @@ export default function CalculatorScreen() {
             </View>
         </View>
     );
+
+
+    const pickAndParsePdf = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: "application/pdf",
+            });
+
+            if (!result.assets?.length) return;
+
+            const uri = result.assets[0].uri;
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+
+            const ocrResponse = await fetch("https://api.ocr.space/parse/image", {
+                method: "POST",
+                headers: {
+                    apikey: "YOUR_OCR_SPACE_API_KEY", // 👈 Replace with your real API key
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    base64Image: `data:application/pdf;base64,${base64}`,
+                    isOverlayRequired: false,
+                    OCREngine: 2,
+                    filetype: "pdf",
+                    scale: true,
+                }),
+            });
+
+            const ocrData = await ocrResponse.json();
+            const extractedText = ocrData?.ParsedResults?.[0]?.ParsedText;
+
+            if (!extractedText) {
+                Alert.alert("Error", "OCR failed to extract text.");
+                return;
+            }
+
+            // Now send extracted text to OpenAI
+            const openai = new OpenAI({
+                apiKey: "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",
+                dangerouslyAllowBrowser: true,
+            });
+
+            const gptResponse = await openai.chat.completions.create({
+                model: "gpt-4",
+                messages: [
+                    {
+                        role: "system",
+                        content:
+                            "You are a health assistant. Extract blood test values like glucose, HDL, LDL, vitamin D, etc. from the following text and return a JSON object with keys matching each metric's ID.",
+                    },
+                    {
+                        role: "user",
+                        content: extractedText,
+                    },
+                ],
+                temperature: 0.2,
+            });
+
+            const parsed = JSON.parse(gptResponse.choices[0].message?.content || "{}");
+
+            // Store in form and bloodwork
+            setFormData((prev) => ({
+                ...prev,
+                ...Object.fromEntries(
+                    Object.entries(parsed).map(([key, val]) => [key, String(val)])
+                ),
+            }));
+
+            setBloodwork({
+                id: Date.now().toString(),
+                userId: user?.id || "",
+                date: new Date().toISOString(),
+                ...parsed,
+            });
+
+            Alert.alert("Success", "Bloodwork extracted and filled in form.");
+        } catch (err) {
+            console.error("PDF parse error", err);
+            Alert.alert("Error", "Could not parse PDF. Try another file.");
+        }
+    };
+
+
+
+
+
+
 
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>

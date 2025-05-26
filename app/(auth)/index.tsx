@@ -10,11 +10,11 @@ import useAuthStore from '@/store/auth-store';
 export default function WelcomeScreen() {
     const { isAuthenticated } = useAuthStore();
 
-    // useEffect(() => {
-    //     if (isAuthenticated) {
-    //         router.replace('/(tabs)');
-    //     }
-    // }, [isAuthenticated]);
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.replace('/(tabs)');
+        }
+    }, [isAuthenticated]);
 
     return (
         <SafeAreaView style={styles.container}>
