@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "expo-app",
-    "slug": "expo-app",
+    "name": "Bio age",
+    "slug": "Bio-age",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/bioage.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/bioage.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -22,21 +22,18 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/bioage.png",
+        "backgroundColor": "#4A90E2"
       },
       "package": "com.ankiit10_dev.expoapp"
     },
     "web": {
-      "favicon": "./assets/images/favicon.png",
+      "favicon": "./assets/images/bioage.png",
       "output": "server"
     },
     "plugins": [
       [
-        "expo-router",
-        {
-          "origin": "https://rork.app/"
-        }
+        "expo-router"
       ],
       "expo-font",
       "expo-web-browser"
@@ -45,11 +42,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": "https://rork.app/"
-      },
+      "router": {},
       "eas": {
-        "projectId": "df7b7395-ba74-497d-842c-545eb46f8e4b"
+        "projectId": "aed91405-1381-4986-87bd-d06e8c6a4e21"
       }
     }
   }

@@ -7,44 +7,62 @@ import Card from '@/components/Card';
 import Colors from '@/constants/colors';
 import useHealthStore from '@/store/health-store';
 import useCalculateHealthStore from '@/store/calculate-health';
+import useAuthStore from '@/store/auth-store';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 48;
 const CHART_HEIGHT = 200;
 
 export default function TrendsScreen() {
-    const { results } = useCalculateHealthStore();
+    const { results, fetchHistory, history } = useCalculateHealthStore();
+    const { isAuthenticated } = useAuthStore();
+    const { user } = useAuthStore();
     // const { bioAgeResults } = useHealthStore();
-    const bioAgeResults = results;
+    // const bioAgeResults = results;
     const [timeRange, setTimeRange] = useState<'3m' | '6m' | '1y' | 'all'>('all');
     const [chartData, setChartData] = useState<any[]>([]);
+    const [bioAgeResults, setBioAgeHistory] = useState([])
 
     useEffect(() => {
-        if (bioAgeResults.length === 0) return;
+        const fetchData = async () => {
+            if (isAuthenticated) {
+                const userId = user?.id || "";
+                const historyResult = await fetchHistory(userId);
+                console.log("history bioage", historyResult)
+                setBioAgeHistory(historyResult)
+                console.log("new value 123", historyResult);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (history.length === 0) return;
 
         // Filter results based on time range
         const now = new Date();
-        let filteredResults = [...bioAgeResults];
+        let filteredResults = [...history];
 
         if (timeRange === '3m') {
             const threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(now.getMonth() - 3);
-            filteredResults = bioAgeResults.filter(result => new Date(result.date) >= threeMonthsAgo);
+            filteredResults = history.filter(result => new Date(result.date) >= threeMonthsAgo);
         } else if (timeRange === '6m') {
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(now.getMonth() - 6);
-            filteredResults = bioAgeResults.filter(result => new Date(result.date) >= sixMonthsAgo);
+            filteredResults = history.filter(result => new Date(result.date) >= sixMonthsAgo);
         } else if (timeRange === '1y') {
             const oneYearAgo = new Date();
             oneYearAgo.setFullYear(now.getFullYear() - 1);
-            filteredResults = bioAgeResults.filter(result => new Date(result.date) >= oneYearAgo);
+            filteredResults = history.filter(result => new Date(result.date) >= oneYearAgo);
         }
 
         // Reverse to get chronological order
         const chronologicalResults = [...filteredResults].reverse();
         setChartData(chronologicalResults);
 
-    }, [bioAgeResults, timeRange]);
+    }, [history, timeRange]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -120,7 +138,10 @@ export default function TrendsScreen() {
 
     return (
         <>
-            <Stack.Screen options={{ title: 'Trends & Analysis' }} />
+            <Stack.Screen options={{
+                title: 'Trends & Analysis',
+                headerBackTitle: 'profile',
+            }} />
             <SafeAreaView style={styles.container} edges={['bottom']}>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <View style={styles.header}>
@@ -185,7 +206,7 @@ export default function TrendsScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {bioAgeResults.length === 0 ? (
+                    {history.length === 0 ? (
                         <Card style={styles.emptyCard}>
                             <Text style={styles.emptyTitle}>No Data Available</Text>
                             <Text style={styles.emptyText}>

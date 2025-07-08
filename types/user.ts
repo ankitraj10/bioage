@@ -4,10 +4,14 @@ export interface User {
   name?: string;
   dateOfBirth?: string;
   gender?: "male" | "female" | "other";
-  height?: number; // in cm
-  weight?: number; // in kg
+
   createdAt: string;
   updatedAt: string;
+  age: number;
+  profile: {
+    height?: number; // in cm
+    weight?: number; // in kg
+  };
 }
 
 export interface AuthState {

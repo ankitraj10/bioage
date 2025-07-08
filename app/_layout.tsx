@@ -129,7 +129,9 @@ function RootLayoutNav({ initialRoute }: { initialRoute: string }) {
             <Stack.Screen
                 name="history"
                 options={{
-                    title: "Bio Age History",
+                    headerTitle: "Bio Age History",
+                    // headerBackVisible: false,
+                    headerBackTitle: 'back',
                 }}
             />
             <Stack.Screen

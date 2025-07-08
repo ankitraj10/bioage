@@ -1,8 +1,10 @@
-const { getDefaultConfig } = require('expo/metro-config');
+// metro.config.js
+const { getDefaultConfig } = require("@expo/metro-config");
 
-const defaultConfig = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname);
 
-defaultConfig.resolver.sourceExts.push('cjs');
-defaultConfig.resolver.unstable_enablePackageExports = false;
+// Optional: Extend if you need 'cjs' support or others
+config.resolver.sourceExts.push("cjs");
+config.resolver.unstable_enablePackageExports = false;
 
-module.exports = defaultConfig;
+module.exports = config;

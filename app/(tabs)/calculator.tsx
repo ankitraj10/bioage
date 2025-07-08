@@ -15,6 +15,7 @@ import { bloodWorkMetrics, lifestyleMetrics, vitalMetrics } from '@/constants/me
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { OpenAI } from "openai"
+import { Upload } from 'lucide-react-native';
 export default function CalculatorScreen() {
     const { user, isAuthenticated } = useAuthStore();
 
@@ -38,6 +39,7 @@ export default function CalculatorScreen() {
         setVitals,
         calculateWithAI,
         isLoading,
+        uploadAndParsePdf
     } = useCalculateHealthStore();
 
     const [activeSection, setActiveSection] = useState<'vitals' | 'lifestyle' | 'bloodwork'>('vitals');
@@ -66,6 +68,8 @@ export default function CalculatorScreen() {
         tsh: '',
     });
     const [uploadMode, setUploadMode] = useState<'manual' | 'pdf'>('manual');
+    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
 
     useEffect(() => {
@@ -189,9 +193,10 @@ export default function CalculatorScreen() {
             saveVitals();
         } else if (activeSection === 'lifestyle') {
             saveLifestyle();
-        } else if (activeSection === 'bloodwork') {
+        } else if (activeSection === 'bloodwork' && uploadMode === 'manual') {
             saveBloodwork();
         }
+
 
         // Calculate age from DOB
         let chronologicalAge = 30;
@@ -205,7 +210,7 @@ export default function CalculatorScreen() {
             }
         }
 
-        console.log("Calling OpenAI with age", chronologicalAge);
+        // console.log("Calling OpenAI with age", chronologicalAge);
 
         const result = await calculateWithAI(chronologicalAge, user?.id || '');
 
@@ -302,54 +307,76 @@ export default function CalculatorScreen() {
                 Choose how you want to enter your blood work data.
             </Text>
 
-            {/* <View style={{ marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
                 <Button
-                    title="Upload PDF Report"
+                    title="Upload PDF"
                     variant={uploadMode === 'pdf' ? 'primary' : 'outline'}
                     onPress={() => setUploadMode('pdf')}
-                    style={{ marginBottom: 8 }}
+                    style={{ flex: 1 }}
                 />
                 <Button
                     title="Add Manually"
                     variant={uploadMode === 'manual' ? 'primary' : 'outline'}
                     onPress={() => setUploadMode('manual')}
+                    style={{ flex: 1 }}
                 />
-            </View> */}
-            {/* 
+            </View>
+
             {uploadMode === 'pdf' && (
-                <View>
-                    <Button
-                        title="Select PDF File"
-                        onPress={pickAndParsePdf}
-                        variant="primary"
-                    />
-                  
+                // <View style={{ marginTop: 30 }}>
+                //     <TouchableOpacity style={styles.uploadContainer} onPress={pickAndParsePdf}>
+                //         <Upload size={20} color="#007AFF" style={{ marginRight: 8 }} onPress={pickAndParsePdf} />
+                //         <Text style={styles.uploadText}>Select PDF File</Text>
+                //     </TouchableOpacity>
+                // </View>
+                <View style={{ marginTop: 30 }}>
+                    {!uploadedFileName ? (
+                        <TouchableOpacity style={styles.uploadContainer} onPress={pickAndParsePdf}>
+                            {uploading ? (
+                                <Text style={styles.uploadText}>Uploading...</Text>
+                            ) : (
+                                <>
+                                    <Upload size={20} color="#007AFF" style={{ marginRight: 8 }} />
+                                    <Text style={styles.uploadText}>Select PDF File</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={styles.uploadedFileContainer}>
+                            <Text style={styles.uploadedFileName}>{uploadedFileName}</Text>
+                            <TouchableOpacity onPress={removeUploadedPdf}>
+                                <Text style={styles.removeText}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
-            )} */}
 
-            {/* {uploadMode === 'manual' && ( */}
-            <View>
-                <Text style={styles.sectionTitle}>Blood Work Results</Text>
-                <Text style={styles.sectionDescription}>
-                    Enter your most recent blood test results for a more accurate biological age calculation.
-                </Text>
 
-                <Text style={styles.optionalText}>
-                    This section is optional but provides more accurate results.
-                </Text>
+            )}
 
-                {bloodWorkMetrics.map(metric => (
-                    <HealthMetricInput
-                        key={metric.id}
-                        label={metric.name}
-                        value={formData[metric.id as keyof typeof formData]}
-                        onChangeText={(value) => handleInputChange(metric.id, value)}
-                        unit={metric.unit}
-                        normalRange={metric.normalRange}
-                    />
-                ))}
+            {uploadMode === 'manual' && (
+                <View>
+                    <Text style={styles.sectionTitle}>Blood Work Results</Text>
+                    <Text style={styles.sectionDescription}>
+                        Enter your most recent blood test results for a more accurate biological age calculation.
+                    </Text>
 
-                {/* <View style={styles.buttonContainer}>
+                    <Text style={styles.optionalText}>
+                        This section is optional but provides more accurate results.
+                    </Text>
+
+                    {bloodWorkMetrics.map(metric => (
+                        <HealthMetricInput
+                            key={metric.id}
+                            label={metric.name}
+                            value={formData[metric.id as keyof typeof formData]}
+                            onChangeText={(value) => handleInputChange(metric.id, value)}
+                            unit={metric.unit}
+                            normalRange={metric.normalRange}
+                        />
+                    ))}
+
+                    {/* <View style={styles.buttonContainer}>
                         <Button
                             title="Back to Lifestyle"
                             onPress={() => setActiveSection('lifestyle')}
@@ -365,9 +392,10 @@ export default function CalculatorScreen() {
                             style={styles.nextButton}
                         />
                     </View> */}
-            </View>
+                </View>
+            )}
 
-            <View style={styles.buttonContainer}>
+            <View style={styles.pdfUploadContainer}>
                 <Button
                     title="Back to Lifestyle"
                     onPress={() => setActiveSection('lifestyle')}
@@ -396,84 +424,31 @@ export default function CalculatorScreen() {
             if (!result.assets?.length) return;
 
             const uri = result.assets[0].uri;
-            const base64 = await FileSystem.readAsStringAsync(uri, {
-                encoding: FileSystem.EncodingType.Base64,
-            });
+            const name = result.assets[0].name || "Uploaded PDF";
 
-            const ocrResponse = await fetch("https://api.ocr.space/parse/image", {
-                method: "POST",
-                headers: {
-                    apikey: "YOUR_OCR_SPACE_API_KEY", // 👈 Replace with your real API key
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    base64Image: `data:application/pdf;base64,${base64}`,
-                    isOverlayRequired: false,
-                    OCREngine: 2,
-                    filetype: "pdf",
-                    scale: true,
-                }),
-            });
+            setUploading(true);
+            const success = await uploadAndParsePdf(uri);
+            setUploading(false);
 
-            const ocrData = await ocrResponse.json();
-            const extractedText = ocrData?.ParsedResults?.[0]?.ParsedText;
 
-            if (!extractedText) {
-                Alert.alert("Error", "OCR failed to extract text.");
-                return;
+            if (success) {
+                setUploadedFileName(name);
+                Alert.alert("Success", "Health data extracted and populated from PDF.");
+            } else {
+                setUploadedFileName(null);
+                Alert.alert("Error", "Failed to process PDF.");
             }
-
-            // Now send extracted text to OpenAI
-            const openai = new OpenAI({
-                apiKey: "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",
-                dangerouslyAllowBrowser: true,
-            });
-
-            const gptResponse = await openai.chat.completions.create({
-                model: "gpt-4",
-                messages: [
-                    {
-                        role: "system",
-                        content:
-                            "You are a health assistant. Extract blood test values like glucose, HDL, LDL, vitamin D, etc. from the following text and return a JSON object with keys matching each metric's ID.",
-                    },
-                    {
-                        role: "user",
-                        content: extractedText,
-                    },
-                ],
-                temperature: 0.2,
-            });
-
-            const parsed = JSON.parse(gptResponse.choices[0].message?.content || "{}");
-
-            // Store in form and bloodwork
-            setFormData((prev) => ({
-                ...prev,
-                ...Object.fromEntries(
-                    Object.entries(parsed).map(([key, val]) => [key, String(val)])
-                ),
-            }));
-
-            setBloodwork({
-                id: Date.now().toString(),
-                userId: user?.id || "",
-                date: new Date().toISOString(),
-                ...parsed,
-            });
-
-            Alert.alert("Success", "Bloodwork extracted and filled in form.");
         } catch (err) {
-            console.error("PDF parse error", err);
-            Alert.alert("Error", "Could not parse PDF. Try another file.");
+            console.error("PDF upload/parse error", err);
+            Alert.alert("Error", "Something went wrong while uploading PDF.");
+            setUploading(false);
         }
     };
 
-
-
-
-
-
+    const removeUploadedPdf = () => {
+        setUploadedFileName(null);
+        // setBloodwork(null); // clear parsed data
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -608,4 +583,51 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: 8,
     },
+    pdfUploadContainer: {
+        flexDirection: 'row',
+        marginTop: 40,
+        width: "auto"
+    },
+    uploadContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#f9f9f9',
+        height: 200,
+        marginBottom: 70
+    },
+    uploadText: {
+        fontSize: 16,
+        color: '#007AFF',
+        fontWeight: '500',
+    },
+    uploadedFileContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#e9f5ff',
+        marginBottom: 16,
+    },
+    uploadedFileName: {
+        fontSize: 16,
+        color: '#333',
+        flex: 1,
+    },
+    removeText: {
+        color: '#ff3b30',
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingHorizontal: 8,
+    },
+
 });

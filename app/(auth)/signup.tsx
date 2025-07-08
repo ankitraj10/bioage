@@ -84,7 +84,7 @@ export default function SignupScreen() {
             <KeyboardAvoidingView
                 style={styles.keyboardAvoidingView}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
             >
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
@@ -176,8 +176,7 @@ const styles = StyleSheet.create({
         paddingBottom: 24,
     },
     formContainer: {
-        flex: 1,
-        justifyContent: 'center',
+        marginBottom: 24,
     },
     title: {
         fontSize: 28,

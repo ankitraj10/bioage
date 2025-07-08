@@ -26,33 +26,56 @@ import useHealthStore from '@/store/health-store';
 import useCalculateHealthStore from '@/store/calculate-health';
 
 export default function ProfileScreen() {
-    const { user, updateProfile, logout, isLoading } = useAuthStore();
-    const { results, clearHealthData } = useCalculateHealthStore();
+    const { user, updateProfile, logout, isLoading, isAuthenticated } = useAuthStore();
+    const { results, clearHealthData, fetchHistory } = useCalculateHealthStore();
     const bioAgeResults = results;
 
-
+    console.log("user data fetched", user, user?.profile?.height?.toString())
     const [name, setName] = useState(user?.name || '');
     const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || '');
-    const [height, setHeight] = useState(user?.height?.toString() || '');
-    const [weight, setWeight] = useState(user?.weight?.toString() || '');
+    const [height, setHeight] = useState(user?.profile?.height?.toString() || '');
+    const [weight, setWeight] = useState(user?.profile?.weight?.toString() || '');
     const [gender, setGender] = useState(user?.gender || 'male');
+    const [age, setAge] = useState(user?.age?.toString() || '');
     const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         if (user) {
             setName(user.name || '');
             setDateOfBirth(user.dateOfBirth || '');
-            setHeight(user.height?.toString() || '');
-            setWeight(user.weight?.toString() || '');
-            setGender(user.gender || 'male');
+            setHeight(user?.profile?.height?.toString() || '');
+            setWeight(user?.profile?.weight?.toString() || '');
+            setGender(user?.gender || 'male');
+            setAge(user.age.toString() || '')
         }
     }, [user]);
 
+    useEffect(() => {
+        const fetchData = async () => {
+            if (isAuthenticated) {
+                const userId = user?.id || "";
+                const historyResult = await fetchHistory(userId);
+                console.log("history bioage trends", historyResult)
+                // setBioAgeHistory(historyResult)
+                console.log("new value 987", historyResult);
+            }
+        };
+
+        fetchData();
+    }, []);
+
     const handleSaveProfile = async () => {
         try {
+            // console.log("new profile 123", {
+            //     name,
+            //     dateOfBirth,
+            //     height: height ? parseFloat(height) : undefined,
+            //     weight: weight ? parseFloat(weight) : undefined,
+            //     gender: gender as 'male' | 'female' | 'other',
+            // });
             await updateProfile({
                 name,
-                dateOfBirth,
+                age: age ? parseInt(age, 10) : undefined,
                 height: height ? parseFloat(height) : undefined,
                 weight: weight ? parseFloat(weight) : undefined,
                 gender: gender as 'male' | 'female' | 'other',
@@ -123,21 +146,45 @@ export default function ProfileScreen() {
     };
 
     const calculateAge = (dateOfBirth: string) => {
-        if (!dateOfBirth) return null;
-
         try {
-            const birthDate = new Date(dateOfBirth);
             const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
 
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
+            if (dateOfBirth && dateOfBirth.trim() !== "") {
+                // ✅ Calculate age from DOB
+                const birthDate = new Date(dateOfBirth);
+                let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    calculatedAge--;
+                }
+
+                const yyyy = birthDate.getFullYear();
+                const mm = String(birthDate.getMonth() + 1).padStart(2, "0");
+                const dd = String(birthDate.getDate()).padStart(2, "0");
+                const formattedDOB = `${yyyy}-${mm}-${dd}`;
+
+                return { age: calculatedAge, dob: formattedDOB };
             }
 
-            return age;
+            if (age && age !== "") {
+                // ✅ Calculate DOB from age
+
+                const birthYear = today.getFullYear() - age;
+                const birthDate = new Date(birthYear, today.getMonth(), today.getDate());
+
+                const yyyy = birthDate.getFullYear();
+                const mm = String(birthDate.getMonth() + 1).padStart(2, "0");
+                const dd = String(birthDate.getDate()).padStart(2, "0");
+                const formattedDOB = `${yyyy}-${mm}-${dd}`;
+                console.log("age age", age, formattedDOB)
+                return { age, dob: formattedDOB };
+            }
+
+            // Neither dateOfBirth nor age is usable
+            return age
         } catch (error) {
-            return null;
+            return { age: null, dob: null };
         }
     };
 
@@ -162,17 +209,17 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.profileDetails}>
-                <View style={styles.detailItem}>
+                {/* <View style={styles.detailItem}>
                     <View style={styles.detailIcon}>
                         <Calendar size={20} color={Colors.primary} />
                     </View>
                     <View style={styles.detailContent}>
                         <Text style={styles.detailLabel}>Date of Birth</Text>
                         <Text style={styles.detailValue}>
-                            {dateOfBirth ? formatDate(dateOfBirth) : 'Not set'}
+                            {(dateOfBirth || age) ? calculateAge(dateOfBirth).dob : 'Not set'}
                         </Text>
                     </View>
-                </View>
+                </View> */}
 
                 <View style={styles.detailItem}>
                     <View style={styles.detailIcon}>
@@ -181,7 +228,7 @@ export default function ProfileScreen() {
                     <View style={styles.detailContent}>
                         <Text style={styles.detailLabel}>Age</Text>
                         <Text style={styles.detailValue}>
-                            {dateOfBirth ? `${calculateAge(dateOfBirth)} years` : 'Not set'}
+                            {(dateOfBirth || age) ? `${calculateAge(dateOfBirth).age} years` : age ? `${age} years` : 'Not set'}
                         </Text>
                     </View>
                 </View>
@@ -226,10 +273,11 @@ export default function ProfileScreen() {
             />
 
             <Input
-                label="Date of Birth"
-                placeholder="YYYY-MM-DD"
-                value={dateOfBirth}
-                onChangeText={setDateOfBirth}
+                label="Age"
+                placeholder="25 eg."
+                value={age}
+                onChangeText={setAge}
+                keyboardType="numeric"
             />
 
             <View style={styles.genderContainer}>
@@ -333,7 +381,7 @@ export default function ProfileScreen() {
 
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push('/(tabs)')}
+                        onPress={() => router.push('/history')}
                     >
                         <View style={styles.menuItemLeft}>
                             <View style={[styles.menuItemIcon, { backgroundColor: Colors.primaryLight }]}>
@@ -356,8 +404,8 @@ export default function ProfileScreen() {
                         </View>
                         <ChevronRight size={20} color={Colors.textLight} />
                     </TouchableOpacity>
-                    {/* 
-                    <TouchableOpacity
+
+                    {/* <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => router.push('/export-data')}
                     >
@@ -371,7 +419,7 @@ export default function ProfileScreen() {
                     </TouchableOpacity> */}
                 </View>
 
-                <View style={styles.menuSection}>
+                {/* <View style={styles.menuSection}>
                     <Text style={styles.menuSectionTitle}>App Settings</Text>
 
                     <TouchableOpacity
@@ -400,7 +448,7 @@ export default function ProfileScreen() {
                         <ChevronRight size={20} color={Colors.textLight} />
                     </TouchableOpacity>
 
-                    {/* <TouchableOpacity
+                    <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => router.push('/privacy')}
                     >
@@ -411,7 +459,7 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemText}>Privacy & Data</Text>
                         </View>
                         <ChevronRight size={20} color={Colors.textLight} />
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.menuItem}
@@ -438,15 +486,15 @@ export default function ProfileScreen() {
                             }
                         }}
                     >
-                        {/* <View style={styles.menuItemLeft}>
+                        <View style={styles.menuItemLeft}>
                             <View style={[styles.menuItemIcon, { backgroundColor: Colors.primary }]}>
                                 <Share2 size={20} color="#fff" />
                             </View>
                             <Text style={styles.menuItemText}>Share Results</Text>
-                        </View> */}
-                        {/* <ChevronRight size={20} color={Colors.textLight} /> */}
+                        </View>
+                        <ChevronRight size={20} color={Colors.textLight} />
                     </TouchableOpacity>
-                </View>
+                </View> */}
 
                 <View style={styles.dangerSection}>
                     <TouchableOpacity
@@ -465,7 +513,7 @@ export default function ProfileScreen() {
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.statsSection}>
+                {/* <View style={styles.statsSection}>
                     <Text style={styles.statsSectionTitle}>Your Stats</Text>
                     <Card style={styles.statsCard}>
                         <View style={styles.statsRow}>
@@ -497,7 +545,7 @@ export default function ProfileScreen() {
                             </View>
                         </View>
                     </Card>
-                </View>
+                </View> */}
             </ScrollView>
         </SafeAreaView>
     );

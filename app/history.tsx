@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,8 +15,10 @@ import { useNavigation } from 'expo-router';
 
 export default function HistoryScreen() {
     const { isAuthenticated } = useAuthStore();
-    const { results } = useCalculateHealthStore();
+    const { results, fetchHistory, history } = useCalculateHealthStore();
     const navigation = useNavigation();
+    const { user } = useAuthStore();
+    const [bioageHistory, setBioAgeHistory] = useState([])
     // const { bioAgeResults } = useHealthStore();
     const bioAgeResults = results;
 
@@ -28,6 +30,21 @@ export default function HistoryScreen() {
             title: 'Bio Age History',
         });
     }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (isAuthenticated) {
+                const userId = user?.id || "";
+                const historyResult = await fetchHistory(userId);
+                console.log("history bioage", historyResult)
+                setBioAgeHistory(history)
+                console.log("new value", historyResult);
+            }
+        };
+
+        fetchData();
+    }, []);
+
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -89,9 +106,15 @@ export default function HistoryScreen() {
         }
     };
 
+
+
+
     return (
         <>
-            <Stack.Screen options={{ title: 'Bio Age History' }} />
+            <Stack.Screen options={{
+                headerTitle: 'Bio Age History',
+                headerBackTitle: 'profile',
+            }} />
             <SafeAreaView style={styles.container} edges={['bottom']}>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <View style={styles.header}>
@@ -101,7 +124,7 @@ export default function HistoryScreen() {
                         </Text>
                     </View>
 
-                    {bioAgeResults.length === 0 ? (
+                    {history.length === 0 ? (
                         <Card style={styles.emptyCard}>
                             <Text style={styles.emptyTitle}>No History Yet</Text>
                             <Text style={styles.emptyText}>
@@ -119,8 +142,8 @@ export default function HistoryScreen() {
                             <View style={styles.trendCard}>
                                 <Text style={styles.trendTitle}>Overall Trend</Text>
                                 <View style={styles.trendGraph}>
-                                    {bioAgeResults.slice(0, 5).reverse().map((result, index) => {
-                                        const height = 100 - ((result.biologicalAge - 20) * 4);
+                                    {history.slice(0, 5).reverse().map((result, index) => {
+                                        const height = 100 - ((result?.biologicalAge - 20) * 4);
                                         return (
                                             <View key={result.id} style={styles.trendBarContainer}>
                                                 <View style={[styles.trendBar, { height: `${Math.min(Math.max(height, 10), 100)}%` }]} />
@@ -133,8 +156,8 @@ export default function HistoryScreen() {
 
                             <Text style={styles.historyTitle}>Assessment History</Text>
 
-                            {bioAgeResults.map((result, index) => {
-                                const previousResult = index < bioAgeResults.length - 1 ? bioAgeResults[index + 1] : null;
+                            {history.map((result, index) => {
+                                const previousResult = index < history.length - 1 ? history[index + 1] : null;
 
                                 return (
                                     <Card key={result.id} style={styles.historyCard}>
@@ -215,12 +238,12 @@ export default function HistoryScreen() {
                                             </View>
                                         </View>
 
-                                        <TouchableOpacity
+                                        {/* <TouchableOpacity
                                             style={styles.viewDetailsButton}
                                             onPress={() => router.push({ pathname: '/result-details', params: { id: result.id } })}
                                         >
                                             <Text style={styles.viewDetailsText}>View Details</Text>
-                                        </TouchableOpacity>
+                                        </TouchableOpacity> */}
                                     </Card>
                                 );
                             })}

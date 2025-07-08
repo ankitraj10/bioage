@@ -130,15 +130,15 @@ export default function ExportDataScreen() {
                     title: title,
                 });
 
-                if (result.action === Share.sharedAction) {
-                    if (result.activityType) {
-                        console.log(`Shared with activity type: ${result.activityType}`);
-                    } else {
-                        console.log('Shared successfully');
-                    }
-                } else if (result.action === Share.dismissedAction) {
-                    console.log('Share dismissed');
-                }
+                // if (result.action === Share.sharedAction) {
+                //     if (result.activityType) {
+                //         console.log(`Shared with activity type: ${result.activityType}`);
+                //     } else {
+                //         console.log('Shared successfully');
+                //     }
+                // } else if (result.action === Share.dismissedAction) {
+                //     console.log('Share dismissed');
+                // }
             }
         } catch (error) {
             console.error('Error exporting data:', error);

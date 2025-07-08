@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,9 +13,11 @@ import useCalculateHealthStore from '@/store/calculate-health';
 
 
 export default function RecommendationsScreen() {
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, user } = useAuthStore();
     const { bioAgeResults } = useHealthStore();
-    const { results } = useCalculateHealthStore();
+    const { results, fetchHistory } = useCalculateHealthStore();
+    const [bioAgeHistory, setBioAgeHistory] = useState([]);
+    const [recommendations, setRecommendation] = useState([]);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -23,11 +25,36 @@ export default function RecommendationsScreen() {
         }
     }, [isAuthenticated]);
 
-    // const latestResult = bioAgeResults.length > 0 ? bioAgeResults[0] : null;
-    const latestResult = results;
-    console.log("test result recomendation", results)
+    useEffect(() => {
+        const fetchData = async () => {
+            if (isAuthenticated) {
+                const userId = user?.id || "";
+                const historyResult = await fetchHistory(userId);
+                console.log("history bioage trends", historyResult)
+                setBioAgeHistory(historyResult)
+                console.log("new value 987", historyResult);
+            }
+        };
 
-    if (results?.length === 0) {
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (results?.length > 0) {
+            setRecommendation(results);
+        }
+    }, [results]);
+
+    useEffect(() => {
+        if (results?.length == 0 && bioAgeHistory?.length > 0) {
+            setRecommendation(bioAgeHistory);
+        }
+    }, [results, bioAgeHistory])
+
+    console.log("test test", results)
+
+
+    if (recommendations?.length === 0) {
         return (
             <SafeAreaView style={styles.container} edges={['bottom']}>
                 <View style={styles.emptyContainer}>
@@ -48,10 +75,12 @@ export default function RecommendationsScreen() {
         );
     }
 
+    console.log("insight rsults", results, recommendations)
+
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <BioAgeCard result={latestResult[0]} />
+                <BioAgeCard result={recommendations[0]} />
 
                 <View style={styles.recommendationsHeader}>
                     <Text style={styles.recommendationsTitle}>Personalized Recommendations</Text>
@@ -60,7 +89,7 @@ export default function RecommendationsScreen() {
                     </Text>
                 </View>
 
-                {results[0]?.recommendations.map((rec) => (
+                {recommendations[0]?.recommendations.map((rec) => (
                     <RecommendationCard key={rec.id} recommendation={rec} />
                 ))}
 
